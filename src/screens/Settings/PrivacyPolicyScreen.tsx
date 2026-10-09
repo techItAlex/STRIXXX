@@ -18,7 +18,7 @@ export default function PrivacyPolicyScreen() {
           items={[
             "STRIX has no server, no accounts, and no analytics or trackers.",
             "Your notes, study sessions, chat history, and settings stay on this device.",
-            "AI features send content directly from your phone to Google's Gemini API, using your own key.",
+            "Local AI processes prompts and selected note context on this device. If you choose Cloud (Gemini), the content needed for that request is sent to Google using your own key.",
             "STRIX itself never sees, stores, or transmits your data anywhere.",
           ]}
         />
@@ -29,8 +29,10 @@ export default function PrivacyPolicyScreen() {
           Your knowledge tree (note titles and note content), study sessions,
           recent AI conversations, display name, theme preference, and
           onboarding state are stored locally through your device's standard
-          app storage. This data never uploads anywhere — there is no STRIX
-          backend to upload it to.
+          app storage. STRIX has no backend or cloud backup. In optional Gemini
+          mode, only the text and relevant context for a request are sent to
+          Google as described below. Calendar deadline parsing uses the local
+          GGUF model on-device.
         </Paragraph>
         <Paragraph>
           Your Gemini API key is stored separately in your device's secure
@@ -40,12 +42,13 @@ export default function PrivacyPolicyScreen() {
         </Paragraph>
       </InfoCard>
 
-      <InfoCard title="2 · What is sent to Google (and only when you ask)">
+      <InfoCard title="2 · Optional cloud AI: what is sent to Google">
         <Paragraph>
-          When you use an AI feature — Discuss my notes, Judge my
-          understanding, AI Organization, or the AI study planner — your device
-          sends a request directly to Google's Gemini API at
-          generativelanguage.googleapis.com. That request contains:
+          Only when you select Cloud (Gemini) and use an AI feature routed through that mode does your
+          device contact Google's Gemini API at
+          generativelanguage.googleapis.com. Local mode runs the selected GGUF
+          model on-device and does not send prompts to Gemini. A cloud request
+          may contain:
         </Paragraph>
         <Bullets
           items={[
@@ -76,7 +79,7 @@ export default function PrivacyPolicyScreen() {
 
       <InfoCard title="4 · Third parties">
         <Paragraph>
-          The only third party that ever receives content is Google, through
+          The only third party that may receive AI content is Google, through
           the Gemini API calls you trigger. Those requests are governed by
           Google's own terms and privacy policy; STRIX has no visibility
           into or control over them beyond what Google states. Your device
@@ -84,7 +87,7 @@ export default function PrivacyPolicyScreen() {
           operations under its own policies.
         </Paragraph>
         <Emphasis>
-          Note: prompts sent to Gemini are processed by Google under the terms
+          Note: when you choose Cloud (Gemini), prompts sent to Gemini are processed by Google under the terms
           of your Gemini API agreement, not under STRIX's control.
         </Emphasis>
       </InfoCard>

@@ -35,18 +35,25 @@ export default function HowToUseScreen() {
         <StepRow badge="3" title="Add content" body="Write the definition or notes — or tap Generate AI Definition and AI writes one that fits the lesson it's under (media capture is coming later), then save." />
       </InfoCard>
 
-      <InfoCard title="3 · Your AI Companion">
+      <InfoCard title="3. Local-first AI">
         <Paragraph>
-          Open the AI tab to find three features. Each one sends only what you
-          type (plus, for Discuss, the few most relevant saved notes) directly
-          to Google's Gemini API with your own key.
+          On-device AI is STRIX's default and primary mode. After you load a
+          compatible GGUF model in the Local model smoke test, AI requests run
+          on your phone and do not need an API key or internet connection.
         </Paragraph>
-        <StepRow badge="1" title="Discuss my notes" body="Ask a question in plain language. STRIX pulls the closest-matching notes in as context and links back to the note it used." />
-        <StepRow badge="2" title="Judge my understanding" body="Enter a term and explain it in your own words. You get a verdict (good / needs work / incorrect), feedback, a fuller explanation, and the key points you missed." />
-        <StepRow badge="3" title="AI Organization" body="Type a new term and get suggested Subjects to file it under — or let AI propose a brand new Subject and the Field it belongs in." />
+        <StepRow badge="1" title="Discuss my notes" body="Ask a question in plain language. STRIX finds a few relevant notes on-device and gives them to the local model as context." />
+        <StepRow badge="2" title="Judge my understanding" body="Enter a term and explain it in your own words. The local model returns feedback, a fuller explanation, and key points to review." />
+        <StepRow badge="3" title="AI Organization" body="Type a new term and get suggested Subjects, or ask the local model to propose a Subject and Field." />
         <Paragraph>
-          Before the first use, tap "Bring Your Own API Key" on the AI tab and
-          paste a free key from Google AI Studio. You can remove it any time.
+          To set up local AI, open Local model smoke test and choose a .gguf
+          model file. STRIX copies it into app storage and loads it on-device.
+          The model is not bundled with the app.
+        </Paragraph>
+        <Paragraph>
+          Gemini is an optional cloud mode. Select Cloud (Gemini) on the AI
+          screen and add your own API key only if you want to use it. In that
+          mode, prompts and relevant note context are sent to Google's Gemini
+          API and an internet connection is required.
         </Paragraph>
       </InfoCard>
 

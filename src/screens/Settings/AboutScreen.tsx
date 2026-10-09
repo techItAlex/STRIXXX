@@ -37,14 +37,16 @@ export default function AboutScreen() {
 
       <InfoCard title="How AI fits in">
         <Paragraph>
-          AI in STRIX is optional and uses your own Gemini API key. When you
-          use an AI feature, the relevant text is sent directly from your phone
-          to Google's Gemini API and the reply comes straight back — STRIX
-          has no server in the middle. Everything else stays on your device.
+          On-device AI is STRIX's default and primary mode. Once you load a
+          compatible GGUF model, generation runs on your phone. Your prompts
+          and selected note context stay on-device in this mode; no Gemini
+          key or internet connection is required.
         </Paragraph>
         <Paragraph>
-          The app works fully offline for notes, browsing, and the timer; only
-          the AI features need an internet connection.
+          Gemini is an optional cloud mode. If you select it and add your own
+          API key, the content needed for the request goes directly from your
+          phone to Google's Gemini API. Notes, browsing, the calendar, and the
+          timer remain available offline.
         </Paragraph>
       </InfoCard>
 

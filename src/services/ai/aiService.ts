@@ -79,14 +79,63 @@ export function retrieveRelevantNodes(
 export type ParsedDeadline = { title: string; date: string; time: string | null; course: string | null };
 const DEADLINE_SCHEMA = {
   type: "object",
-  properties: { title: { type: "string" }, date: { type: "string" }, time: { type: ["string", "null"] }, course: { type: ["string", "null"] } },
+  properties: { title: { type: "string" }, date: { type: "string" }, time: { type: "string" }, course: { type: "string" } },
   required: ["title", "date", "time", "course"],
   additionalProperties: false,
 };
 const DEADLINE_LIST_SCHEMA = { type: "array", items: DEADLINE_SCHEMA };
 
+function parseStructuredJson(raw: string): any {
+  const cleaned = stripCodeFence(raw);
+  try { return JSON.parse(cleaned); } catch { /* Try to recover JSON wrapped in prose. */ }
+  for (let start = 0; start < cleaned.length; start++) {
+    if (cleaned[start] !== "{" && cleaned[start] !== "[") continue;
+    const stack: string[] = [];
+    let inString = false;
+    let escaped = false;
+    for (let i = start; i < cleaned.length; i++) {
+      const char = cleaned[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') { inString = true; continue; }
+      if (char === "{") stack.push("}");
+      else if (char === "[") stack.push("]");
+      else if (char === "}" || char === "]") {
+        if (stack.pop() !== char) break;
+        if (!stack.length) {
+          try { return JSON.parse(cleaned.slice(start, i + 1)); } catch { break; }
+        }
+      }
+    }
+  }
+  throw new Error("The model did not return readable JSON.");
+}
+
+function normalizeTime(value: any): string | null {
+  if (value == null || value === "") return null;
+  const raw = sanitizeText(String(value), 16).trim();
+  const twelveHour = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+  if (twelveHour) {
+    let hour = Number(twelveHour[1]) % 12;
+    if (twelveHour[3].toLowerCase() === "pm") hour += 12;
+    return `${String(hour).padStart(2, "0")}:${twelveHour[2] ?? "00"}`;
+  }
+  const twentyFourHour = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (twentyFourHour) return `${twentyFourHour[1].padStart(2, "0")}:${twentyFourHour[2]}`;
+  return raw;
+}
+
 function normalizeParsedDeadline(value: any): ParsedDeadline {
-  const result = { title: sanitizeText(value?.title, MAX_TITLE_CHARS), date: sanitizeText(value?.date, 10), time: value?.time == null ? null : sanitizeText(value.time, 5), course: value?.course == null ? null : sanitizeText(value.course, MAX_TITLE_CHARS) };
+  const result = {
+    title: sanitizeText(value?.title, MAX_TITLE_CHARS),
+    date: sanitizeText(value?.date, 32),
+    time: normalizeTime(value?.time),
+    course: value?.course == null || value?.course === "" ? null : sanitizeText(value.course, MAX_TITLE_CHARS),
+  };
   const date = new Date(result.date + "T00:00:00Z");
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(result.date) && !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === result.date;
   const validTime = !result.time || (/^\d{2}:\d{2}$/.test(result.time) && Number(result.time.slice(0, 2)) < 24 && Number(result.time.slice(3)) < 60);
@@ -97,24 +146,30 @@ function normalizeParsedDeadline(value: any): ParsedDeadline {
 export async function parseDeadlineText(text: string, todayISO: string, timeZone: string): Promise<ParsedDeadline> {
   const cleanText = sanitizeText(text, MAX_FIELD_CHARS);
   if (!cleanText) throw new AiServiceError("Enter a deadline description first.");
-  const raw = await generateLocalText({ jsonSchema: DEADLINE_SCHEMA,
-    systemInstruction: "Extract one deadline from the user's text. Use the supplied current date and time zone to resolve relative dates. Use 24-hour HH:mm or null when no time is stated. Return a date as YYYY-MM-DD and null for an unknown course. Do not infer an unstated time.",
-    prompt: `Today is ${todayISO}. Time zone: ${timeZone}.\nDeadline text: ${cleanText}` });
-  try { return normalizeParsedDeadline(JSON.parse(stripCodeFence(raw))); }
-  catch (error) { if (error instanceof AiServiceError) throw error; throw new AiServiceError("Couldn't read the deadline details. Review them in the manual form."); }
+  const raw = await generateLocalText({
+    jsonSchema: DEADLINE_SCHEMA,
+    systemInstruction: "Extract one deadline. Resolve relative dates using the supplied current date and time zone. Return only JSON with four string fields: title, date (YYYY-MM-DD), time (24-hour HH:mm, or an empty string if not stated), and course (or an empty string if unknown). Do not use null, markdown, or text outside the JSON object.",
+    prompt: `Today is ${todayISO}. Time zone: ${timeZone}.\nDeadline text: ${cleanText}\nReturn an object like {"title":"Biology report","date":"2026-10-18","time":"17:00","course":"Biology"}.`,
+  });
+  try { return normalizeParsedDeadline(parseStructuredJson(raw)); }
+  catch (error) { if (error instanceof AiServiceError) throw error; throw new AiServiceError("Couldn't read the deadline details. Try a short format such as: Biology report, 2026-10-18, 17:00, Biology. Review or enter it in the manual form."); }
 }
 
 export async function parseDeadlineList(text: string): Promise<ParsedDeadline[]> {
   const cleanText = sanitizeText(text, MAX_PROMPT_CHARS);
   if (!cleanText) throw new AiServiceError("Paste a deadline list first.");
   const todayISO = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-  const raw = await generateLocalText({ jsonSchema: DEADLINE_LIST_SCHEMA,
-    systemInstruction: "Extract all clearly stated assignments and due dates from the pasted list. Resolve relative dates using today. Return an empty array when no deadline is clear. Each item has title, date YYYY-MM-DD, time HH:mm or null, and course or null.",
-    prompt: `Today is ${todayISO}; time zone is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.\nPasted list:\n${cleanText}` });
-  try { const parsed = JSON.parse(stripCodeFence(raw)); if (!Array.isArray(parsed)) throw new Error("Expected list"); return parsed.map(normalizeParsedDeadline); }
-  catch { throw new AiServiceError("Couldn't read the pasted deadline list. You can add deadlines manually."); }
+  const raw = await generateLocalText({
+    jsonSchema: DEADLINE_LIST_SCHEMA,
+    systemInstruction: "Extract clearly stated assignments and due dates. Resolve relative dates using today. Return only a JSON array. Each item must contain string fields title, date as YYYY-MM-DD, time as 24-hour HH:mm or an empty string, and course or an empty string. Return [] if no deadline is clear. Do not use null, markdown, or text outside the JSON array.",
+    prompt: `Today is ${todayISO}; time zone is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.\nPasted list:\n${cleanText}`,
+  });
+  try {
+    const parsed = parseStructuredJson(raw);
+    if (!Array.isArray(parsed)) throw new Error("Expected list");
+    return parsed.map(normalizeParsedDeadline);
+  } catch { throw new AiServiceError("Couldn't read the pasted deadline list. Try a simpler list or add the deadlines manually."); }
 }
-
 function buildNotesContext(matches: RetrievedContext[]): string {
   // Every field interpolated from local notes is sanitized and length-capped,
   // so a malformed or oversized note can't blow up the request.

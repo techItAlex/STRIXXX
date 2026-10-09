@@ -85,15 +85,15 @@ export default function SettingsScreen() {
     <View style={styles.card}>
       <NavRow icon="info" title="About STRIX" detail="What this app is and why it exists." onPress={() => navigation.navigate("About")} />
       <NavRow icon="book" title="How to Use" detail="The tree, Quick Note, and the three AI features." onPress={() => navigation.navigate("HowToUse")} />
-      <NavRow icon="help" title="FAQ" detail="Privacy, API keys, billing, and offline use." onPress={() => navigation.navigate("Faq")} />
+      <NavRow icon="help" title="FAQ" detail="Local AI, optional Gemini, privacy, and offline use." onPress={() => navigation.navigate("Faq")} />
     </View>
 
     {/* ---------- Legal & privacy ---------- */}
     <Text style={styles.title}>Legal & Privacy</Text>
     <Text style={styles.subtitle}>Where your data goes — and the terms that come with AI features.</Text>
     <View style={styles.card}>
-      <NavRow icon="shield" title="Privacy Policy" detail="Notes stay on-device; AI goes straight to Google." onPress={() => navigation.navigate("PrivacyPolicy")} />
-      <NavRow icon="document" title="Terms of Use" detail="Personal use, AI disclaimers, your API billing." onPress={() => navigation.navigate("TermsOfUse")} />
+      <NavRow icon="shield" title="Privacy Policy" detail="Local AI stays on-device; Gemini is optional." onPress={() => navigation.navigate("PrivacyPolicy")} />
+      <NavRow icon="document" title="Terms of Use" detail="Personal use and local/optional cloud AI." onPress={() => navigation.navigate("TermsOfUse")} />
     </View>
 
     <View style={styles.note}><Text style={styles.noteTitle}>Built to stay yours</Text><Text style={styles.noteText}>STRIX has no servers and collects nothing. Everything is stored on this device.</Text></View>
