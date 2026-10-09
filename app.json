@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "STRIX",
+    "slug": "strix",
+    "scheme": "strix",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0F19",
+    "icon": "./assets/icon.png",
+    "android": {
+      "package": "com.strix.app",
+      "backgroundColor": "#0B0F19",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#030C2B"
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.strix.app"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-document-picker",
+      "expo-file-system",
+      "expo-notifications"
+    ],
+    "owner": "zacarisha",
+    "extra": {
+      "eas": {
+        "projectId": "df9916b5-cdf7-4790-a894-a07690ae0938"
+      }
+    }
+  }
+}
